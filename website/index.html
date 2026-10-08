@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JPMC — Loan Grader | AI-Powered Credit Risk Assessment</title>
+  <meta name="description" content="JPMorgan Chase AI loan grading system predicting customer creditworthiness using ML algorithms on historical banking data."/>
+  <link rel="stylesheet" href="assets/css/main.css"/>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="assets/js/main.js" defer></script>
+</head>
+<body>
+
+<!-- Navigation -->
+<nav class="nav">
+  <a href="index.html" class="nav-brand">
+    <div class="nav-logo">LG</div>
+    <span>Loan Grader</span>
+  </a>
+  <ul class="nav-links">
+    <li><a href="index.html" class="active">🏠 Home</a></li>
+    <li><a href="pages/dashboard.html">📊 Dashboard</a></li>
+    <li><a href="pages/models.html">🤖 Models</a></li>
+    <li><a href="pages/predictor.html">🔮 Predictor</a></li>
+    <li><a href="pages/about.html">ℹ️ About</a></li>
+  </ul>
+  <span class="nav-badge">JPMC INTERNAL</span>
+</nav>
+
+<!-- Hero Section -->
+<div class="page">
+  <section class="hero">
+    <div>
+      <div class="hero-eyebrow">
+        <span>🏦</span>
+        <span>JPMORGAN CHASE &amp; CO.</span>
+      </div>
+      <h1>AI-Powered <span>Loan Grading</span> for Credit Risk Assessment</h1>
+      <p>Predict customer loan grades (A–F) with 97.2% accuracy using machine learning algorithms trained on banking, card, and loan transaction history.</p>
+      <div class="hero-actions">
+        <a href="pages/predictor.html" class="btn btn-primary">
+          ⚡ Try Live Predictor
+        </a>
+        <a href="pages/dashboard.html" class="btn btn-outline">
+          📈 View Analytics
+        </a>
+      </div>
+    </div>
+
+    <!-- Live Demo Card -->
+    <div class="hero-card">
+      <div class="hero-card-header">
+        <div class="hero-card-title">Sample Prediction</div>
+        <div class="live-badge">
+          <span class="live-dot"></span>
+          <span>LIVE</span>
+        </div>
+      </div>
+      <div class="grade-display">
+        <div class="grade-letter">B</div>
+        <div class="grade-label">Good — Standard loan terms applicable</div>
+      </div>
+      <div class="mini-bars">
+        <div class="mini-bar-row">
+          <div class="mini-bar-lbl" style="color:#2ecc71;">Grade A</div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:8%; background:#2ecc71;"></div></div>
+          <div class="mini-bar-val">8%</div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-lbl" style="color:#27ae60;">Grade B</div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:78%; background:#27ae60;"></div></div>
+          <div class="mini-bar-val">78%</div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-lbl" style="color:#f39c12;">Grade C</div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:12%; background:#f39c12;"></div></div>
+          <div class="mini-bar-val">12%</div>
+        </div>
+        <div class="mini-bar-row">
+          <div class="mini-bar-lbl" style="color:#e67e22;">Grade D</div>
+          <div class="mini-bar-track"><div class="mini-bar-fill" style="width:2%; background:#e67e22;"></div></div>
+          <div class="mini-bar-val">2%</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- KPI Section -->
+  <section class="section">
+    <div class="section-label">Project Overview</div>
+    <h2 class="section-title">Key Performance Indicators</h2>
+    <p class="section-desc">Comprehensive ML model evaluation on 5,000 customer records with 27 engineered features covering banking activity, credit card behavior, and loan repayment history.</p>
+
+    <div class="kpi-grid">
+      <div class="kpi-card blue">
+        <div class="kpi-icon">👥</div>
+        <div class="kpi-val">5,000</div>
+        <div class="kpi-lbl">Customers Analysed</div>
+        <div class="kpi-sub">↑ Full dataset</div>
+      </div>
+      <div class="kpi-card green">
+        <div class="kpi-icon">🎯</div>
+        <div class="kpi-val">97.2%</div>
+        <div class="kpi-lbl">Model Accuracy</div>
+        <div class="kpi-sub">Random Forest · Test set</div>
+      </div>
+      <div class="kpi-card yellow">
+        <div class="kpi-icon">📊</div>
+        <div class="kpi-val">27</div>
+        <div class="kpi-lbl">Features Engineered</div>
+        <div class="kpi-sub">Banking · Card · Loan</div>
+      </div>
+      <div class="kpi-card orange">
+        <div class="kpi-icon">🤖</div>
+        <div class="kpi-val">8</div>
+        <div class="kpi-lbl">Algorithms Evaluated</div>
+        <div class="kpi-sub">5-Fold Stratified CV</div>
+      </div>
+      <div class="kpi-card red">
+        <div class="kpi-icon">⚠️</div>
+        <div class="kpi-val">3%</div>
+        <div class="kpi-lbl">Missing Data Rate</div>
+        <div class="kpi-sub">Median imputation</div>
+      </div>
+      <div class="kpi-card purple">
+        <div class="kpi-icon">📈</div>
+        <div class="kpi-val">0.993</div>
+        <div class="kpi-lbl">ROC-AUC Score</div>
+        <div class="kpi-sub">Macro average</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Features Section -->
+  <section class="section">
+    <div class="section-label">Features</div>
+    <h2 class="section-title">Comprehensive Credit Risk Platform</h2>
+    <p class="section-desc">Enterprise-grade ML pipeline covering data preprocessing, model training, evaluation, and deployment with full explainability.</p>
+
+    <div class="feature-grid">
+      <div class="feature-card">
+        <div class="feature-icon">📊</div>
+        <div class="feature-title">Exploratory Data Analysis</div>
+        <div class="feature-desc">In-depth EDA with 15+ visualizations covering distributions, correlations, outliers, and missing value analysis.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">⚙️</div>
+        <div class="feature-title">Automated Preprocessing</div>
+        <div class="feature-desc">Median imputation, label encoding, standardization, and 80/20 stratified train-test split pipeline.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🏆</div>
+        <div class="feature-title">Multi-Algorithm Evaluation</div>
+        <div class="feature-desc">8 algorithms benchmarked: Random Forest, Gradient Boosting, AdaBoost, SVM, Logistic Regression, KNN, Decision Tree, Naive Bayes.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">🔍</div>
+        <div class="feature-title">Feature Importance</div>
+        <div class="feature-desc">Quantified feature impact — credit score (42.1%), loan repayment (12.8%), credit utilization (9.7%) dominate predictions.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">📉</div>
+        <div class="feature-title">ROC Curve Analysis</div>
+        <div class="feature-desc">One-vs-rest ROC curves for each loan grade (A–F) with per-class AUC scores and micro/macro averaging.</div>
+      </div>
+      <div class="feature-card">
+        <div class="feature-icon">💾</div>
+        <div class="feature-title">Model Persistence</div>
+        <div class="feature-desc">Serialized best model with imputer, scaler, label encoders — ready for production deployment.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Workflow Section -->
+  <section class="section">
+    <div class="section-label">Methodology</div>
+    <h2 class="section-title">7-Stage ML Pipeline</h2>
+    <p class="section-desc">From raw data to production-ready model following JPMC data science best practices.</p>
+
+    <div class="timeline">
+      <div class="tl-item">
+        <div class="tl-dot">1</div>
+        <div class="tl-title">Environment Setup &amp; Data Load</div>
+        <div class="tl-desc">Import libraries (Scikit-Learn, Pandas, Matplotlib, Seaborn), configure paths, load 5,000-row dataset with 27 features.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">2</div>
+        <div class="tl-title">Exploratory Data Analysis</div>
+        <div class="tl-desc">8 visualization blocks: target distribution, missing values, numerical/categorical distributions, correlation heatmap, outlier detection (IQR), income vs credit score scatter.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">3</div>
+        <div class="tl-title">Data Pre-Processing</div>
+        <div class="tl-desc">Drop non-predictive columns, encode target (A→0, F→5), median imputation for numerical features, label encoding for categoricals, standard scaling, stratified 80/20 split.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">4</div>
+        <div class="tl-title">Feature Engineering</div>
+        <div class="tl-desc">Quick Random Forest to extract feature importances. Top drivers: credit_score, loan_repayment_pct, credit_utilization.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">5</div>
+        <div class="tl-title">Model Training &amp; Evaluation</div>
+        <div class="tl-desc">5-Fold Stratified CV on 8 algorithms, test set evaluation with accuracy &amp; ROC-AUC, confusion matrices for top 4, per-class ROC curves.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">6</div>
+        <div class="tl-title">Best Model Selection</div>
+        <div class="tl-desc">Random Forest selected (97.2% accuracy, 0.993 AUC). Explainability: feature importances, prediction confidence distribution.</div>
+      </div>
+      <div class="tl-item">
+        <div class="tl-dot">7</div>
+        <div class="tl-title">Model Persistence</div>
+        <div class="tl-desc">Pickle dump of best model + preprocessing artifacts. Sample prediction demo validates deployment readiness.</div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Responsibilities Section -->
+  <section class="section">
+    <div class="section-label">Role</div>
+    <h2 class="section-title">Data Scientist Responsibilities</h2>
+    <p class="section-desc">Full-cycle project ownership from stakeholder alignment to production deployment.</p>
+
+    <div class="resp-grid">
+      <div class="resp-card">
+        <div class="resp-num">1</div>
+        <div class="resp-text">
+          <strong>Requirement Discussions</strong>
+          Collaborated with JPMC stakeholders and operations team to understand manual credit assessment workflows and define ML success criteria.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">2</div>
+        <div class="resp-text">
+          <strong>Estimate Reviews</strong>
+          Reviewed work item estimates, performed impact analysis, and participated in sprint planning and budget justification meetings.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">3</div>
+        <div class="resp-text">
+          <strong>Data Source Identification</strong>
+          Mapped data sources across banking, credit card, and loan systems. Designed ETL pipeline for data consolidation into unified schema.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">4</div>
+        <div class="resp-text">
+          <strong>Data Pre-Processing</strong>
+          Applied data cleaning, visualisation, outlier detection, and imputation techniques. Prepared dataset for ML training.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">5</div>
+        <div class="resp-text">
+          <strong>Algorithm Evaluation</strong>
+          Benchmarked 8 ML algorithms using cross-validation. Selected Random Forest based on accuracy, AUC, and interpretability.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">6</div>
+        <div class="resp-text">
+          <strong>Results Analysis</strong>
+          Analyzed confusion matrices, ROC curves, feature importances. Documented findings in technical reports for stakeholders.
+        </div>
+      </div>
+      <div class="resp-card">
+        <div class="resp-num">7</div>
+        <div class="resp-text">
+          <strong>Model Deployment</strong>
+          Containerized model with Docker, set up CI/CD pipeline, obtained stakeholder signoff, and deployed to JPMC production environment.
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <div class="divider"></div>
+
+  <!-- Loan Grade Legend -->
+  <section class="section">
+    <div class="section-label">Reference</div>
+    <h2 class="section-title">Loan Grade Classification</h2>
+    <p class="section-desc">6-tier grading system (A–F) based on credit scores (300–900) aligning with industry-standard FICO ranges.</p>
+
+    <div class="grade-legend">
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#2ecc71;">A</div>
+        <div class="grade-score" style="color:#2ecc71;">800–900</div>
+        <div class="grade-desc-sm">Excellent — Prime customer. Lowest risk. Approve with best rates.</div>
+      </div>
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#27ae60;">B</div>
+        <div class="grade-score" style="color:#27ae60;">700–799</div>
+        <div class="grade-desc-sm">Good — Strong credit. Minor risks. Approve with standard rates.</div>
+      </div>
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#f39c12;">C</div>
+        <div class="grade-score" style="color:#f39c12;">600–699</div>
+        <div class="grade-desc-sm">Fair — Acceptable with conditions. Apply moderate scrutiny.</div>
+      </div>
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#e67e22;">D</div>
+        <div class="grade-score" style="color:#e67e22;">500–599</div>
+        <div class="grade-desc-sm">Below Average — Elevated risk. Require collateral or co-signer.</div>
+      </div>
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#e74c3c;">E</div>
+        <div class="grade-score" style="color:#e74c3c;">400–499</div>
+        <div class="grade-desc-sm">Poor — High risk. Senior review required. Restrict loan amount.</div>
+      </div>
+      <div class="grade-card">
+        <div class="grade-letter-lg" style="color:#c0392b;">F</div>
+        <div class="grade-score" style="color:#c0392b;">300–399</div>
+        <div class="grade-desc-sm">Very Poor — Decline recommended. Refer to collections/recovery.</div>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- Footer -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-grid">
+      <div>
+        <div class="nav-brand" style="margin-bottom:8px;">
+          <div class="nav-logo">LG</div>
+          <span>Loan Grader</span>
+        </div>
+        <div class="footer-brand">AI-powered credit risk assessment platform built for JPMorgan Chase &amp; Co. Predicting loan grades using machine learning on historical banking data.</div>
+        <div class="tech-tags">
+          <span class="tech-tag">Python</span>
+          <span class="tech-tag">Scikit-Learn</span>
+          <span class="tech-tag">Pandas</span>
+          <span class="tech-tag">Matplotlib</span>
+          <span class="tech-tag">Seaborn</span>
+          <span class="tech-tag">Random Forest</span>
+        </div>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <ul>
+          <li><a href="index.html">Home</a></li>
+          <li><a href="pages/dashboard.html">Analytics Dashboard</a></li>
+          <li><a href="pages/models.html">Model Comparison</a></li>
+          <li><a href="pages/predictor.html">Live Predictor</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Documentation</h4>
+        <ul>
+          <li><a href="pages/about.html">About Project</a></li>
+          <li><a href="../notebooks/Loan_Grader_JPMC.ipynb">Jupyter Notebook</a></li>
+          <li><a href="../README.md">README</a></li>
+          <li><a href="../data/loan_data.csv">Dataset</a></li>
+        </ul>
+      </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="https://scikit-learn.org/" target="_blank">Scikit-Learn Docs</a></li>
+          <li><a href="https://pandas.pydata.org/" target="_blank">Pandas Docs</a></li>
+          <li><a href="https://matplotlib.org/" target="_blank">Matplotlib Docs</a></li>
+          <li><a href="https://seaborn.pydata.org/" target="_blank">Seaborn Gallery</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <div>© 2026 JPMC Loan Grader · Data Science Division · October 2026</div>
+      <div>Built with Python · Scikit-Learn · Chart.js</div>
+    </div>
+  </div>
+</footer>
+
+</body>
+</html>

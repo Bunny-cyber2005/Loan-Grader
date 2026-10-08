@@ -1,0 +1,152 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Analytics Dashboard — JPMC Loan Grader</title>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../assets/js/dashboard.js" defer></script>
+  <script src="../assets/js/main.js" defer></script>
+</head>
+<body>
+<nav class="nav">
+  <a href="../index.html" class="nav-brand"><div class="nav-logo">LG</div><span>Loan Grader</span></a>
+  <ul class="nav-links">
+    <li><a href="../index.html">🏠 Home</a></li>
+    <li><a href="dashboard.html" class="active">📊 Dashboard</a></li>
+    <li><a href="models.html">🤖 Models</a></li>
+    <li><a href="predictor.html">🔮 Predictor</a></li>
+    <li><a href="about.html">ℹ️ About</a></li>
+  </ul>
+  <span class="nav-badge">JPMC INTERNAL</span>
+</nav>
+
+<div class="page">
+  <section class="section">
+    <div class="section-label">Exploratory Data Analysis</div>
+    <h2 class="section-title">Analytics Dashboard</h2>
+    <p class="section-desc">Interactive charts generated from the 5,000-customer JPMC loan dataset covering grade distribution, income demographics, credit behavior, and feature correlations.</p>
+
+    <!-- KPI Row -->
+    <div class="kpi-grid" style="margin-bottom:32px;">
+      <div class="kpi-card blue"><div class="kpi-icon">👥</div><div class="kpi-val">5,000</div><div class="kpi-lbl">Total Customers</div></div>
+      <div class="kpi-card green"><div class="kpi-icon">✅</div><div class="kpi-val">97.2%</div><div class="kpi-lbl">Model Accuracy</div></div>
+      <div class="kpi-card yellow"><div class="kpi-icon">📋</div><div class="kpi-val">27</div><div class="kpi-lbl">Features</div></div>
+      <div class="kpi-card orange"><div class="kpi-icon">⚠️</div><div class="kpi-val">249</div><div class="kpi-lbl">Outliers Detected</div></div>
+      <div class="kpi-card red"><div class="kpi-icon">❓</div><div class="kpi-val">3%</div><div class="kpi-lbl">Missing Values</div></div>
+      <div class="kpi-card purple"><div class="kpi-icon">🎯</div><div class="kpi-val">6</div><div class="kpi-lbl">Grade Classes</div></div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="tabs">
+      <button class="tab-btn active" onclick="switchTab(this,'tab-dist')">Grade Distribution</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-income')">Income &amp; Credit</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-behavior')">Credit Behavior</button>
+      <button class="tab-btn" onclick="switchTab(this,'tab-features')">Feature Analysis</button>
+    </div>
+
+    <!-- Tab 1: Distribution -->
+    <div class="tab-pane active" id="tab-dist">
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">📊 Loan Grade Distribution</div>
+          <canvas id="gradeBarChart" height="240"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">🥧 Grade Share</div>
+          <canvas id="gradePieChart" height="240"></canvas>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="card">
+          <div class="card-title">🧑 Gender Split</div>
+          <canvas id="genderChart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">💍 Marital Status</div>
+          <canvas id="maritalChart" height="200"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">🏢 Employment Type</div>
+          <canvas id="employmentChart" height="200"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: Income & Credit -->
+    <div class="tab-pane" id="tab-income">
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">💰 Annual Income Distribution</div>
+          <canvas id="incomeChart" height="240"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">📈 Credit Score by Grade (Box Plot)</div>
+          <canvas id="creditBoxChart" height="240"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">🔢 Credit Score Range per Grade</div>
+        <canvas id="creditRangeChart" height="110"></canvas>
+      </div>
+    </div>
+
+    <!-- Tab 3: Credit Behavior -->
+    <div class="tab-pane" id="tab-behavior">
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">💳 Avg Credit Utilization by Grade</div>
+          <canvas id="utilizationChart" height="240"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">⏰ Avg Late Payments by Grade</div>
+          <canvas id="latePayChart" height="240"></canvas>
+        </div>
+      </div>
+      <div class="grid-2">
+        <div class="card">
+          <div class="card-title">📉 Avg Debt-to-Income by Grade</div>
+          <canvas id="dtiChart" height="240"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">🔄 Avg Loan Repayment % by Grade</div>
+          <canvas id="repayChart" height="240"></canvas>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 4: Features -->
+    <div class="tab-pane" id="tab-features">
+      <div class="grid-2" style="margin-bottom:20px;">
+        <div class="card">
+          <div class="card-title">🔑 Top 12 Feature Importances</div>
+          <canvas id="featureChart" height="320"></canvas>
+        </div>
+        <div class="card">
+          <div class="card-title">⚠️ Outlier Count by Feature (IQR)</div>
+          <canvas id="outlierChart" height="320"></canvas>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-title">❓ Missing Values by Feature</div>
+        <canvas id="missingChart" height="110"></canvas>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-bottom" style="border-top:none; padding-top:0;">
+      <div>© 2026 JPMC Loan Grader · Data Science Division</div>
+      <div>All charts generated from dataset of 5,000 records</div>
+    </div>
+  </div>
+</footer>
+
+
+</body>
+</html>

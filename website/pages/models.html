@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Model Comparison — JPMC Loan Grader</title>
+  <link rel="stylesheet" href="../assets/css/main.css"/>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="../assets/js/main.js" defer></script>
+  <style>
+    /* ── Page-specific overrides ── */
+    .model-winner {
+      background: linear-gradient(135deg, rgba(31,111,235,0.08), rgba(46,204,113,0.06));
+      border: 1px solid rgba(31,111,235,0.35);
+      border-radius: 16px;
+      padding: 32px;
+      position: relative;
+      overflow: hidden;
+    }
+    .model-winner::before {
+      content: '';
+      position: absolute; top:0; left:0; right:0; height:3px;
+      background: linear-gradient(90deg, #1f6feb, #2ecc71);
+    }
+    .winner-badge {
+      display: inline-flex; align-items: center; gap: 6px;
+      background: rgba(46,204,113,0.15); border: 1px solid rgba(46,204,113,0.3);
+      color: #2ecc71; padding: 4px 12px; border-radius: 20px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.5px;
+      margin-bottom: 14px;
+    }
+    .stat-row {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr));
+      gap: 14px; margin-top: 20px;
+    }
+    .stat-item {
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; padding: 16px 14px; text-align: center;
+    }
+    .stat-val { font-size: 1.6rem; font-weight: 800; color: var(--text); }
+    .stat-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 3px; }
+
+    .algo-grid {
+      display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+      gap: 16px;
+    }
+    .algo-card {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: var(--radius); padding: 22px 20px;
+      transition: border-color 0.2s, transform 0.2s;
+      position: relative;
+    }
+    .algo-card:hover { border-color: var(--muted2); transform: translateY(-2px); }
+    .algo-card.best {
+      border-color: rgba(46,204,113,0.4);
+      background: linear-gradient(135deg, rgba(46,204,113,0.04), var(--surface));
+    }
+    .algo-rank {
+      position: absolute; top: 14px; right: 14px;
+      width: 28px; height: 28px; border-radius: 50%;
+      display: grid; place-items: center;
+      font-size: 0.72rem; font-weight: 800;
+    }
+    .rank-1 { background: #f39c12; color: #000; }
+    .rank-2 { background: #8b949e; color: #000; }
+    .rank-3 { background: #cd7f32; color: #000; }
+    .rank-other { background: var(--border); color: var(--muted); }
+    .algo-name { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 4px; }
+    .algo-type { font-size: 0.72rem; color: var(--muted); margin-bottom: 14px; }
+    .algo-metrics { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .metric-box {
+      background: var(--bg); border-radius: 8px; padding: 10px 8px; text-align: center;
+    }
+    .metric-val { font-size: 1.05rem; font-weight: 800; }
+    .metric-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 2px; }
+    .cv-bar-track { background: var(--border2); border-radius: 4px; height: 6px; margin-top: 6px; }
+    .cv-bar-fill  { height: 6px; border-radius: 4px; background: var(--accent); }
+    .cv-label { display: flex; justify-content: space-between; font-size: 0.7rem; color: var(--muted); margin-bottom: 3px; }
+
+    .pros-cons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .pro-item, .con-item { font-size: 0.72rem; display: flex; align-items: flex-start; gap: 5px; line-height: 1.4; }
+    .pro-item { color: #2ecc71; }
+    .con-item { color: #e74c3c; }
+
+    .feature-imp-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+    .fi-label { font-size: 0.72rem; color: var(--muted); width: 180px; flex-shrink: 0; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .fi-track { flex: 1; background: var(--border2); border-radius: 4px; height: 8px; }
+    .fi-fill  { height: 8px; border-radius: 4px; transition: width 1s ease; }
+    .fi-val   { font-size: 0.7rem; color: var(--muted); width: 44px; text-align: right; }
+
+    .cv-table th { font-size: 0.7rem; }
+    .cv-table td { font-size: 0.82rem; }
+    .highlight-row td { background: rgba(46,204,113,0.06) !important; font-weight: 600; }
+  </style>
+</head>
+<body>
+
+<nav class="nav">
+  <a href="../index.html" class="nav-brand"><div class="nav-logo">LG</div><span>Loan Grader</span></a>
+  <ul class="nav-links">
+    <li><a href="../index.html">🏠 Home</a></li>
+    <li><a href="dashboard.html">📊 Dashboard</a></li>
+    <li><a href="models.html" class="active">🤖 Models</a></li>
+    <li><a href="predictor.html">🔮 Predictor</a></li>
+    <li><a href="about.html">ℹ️ About</a></li>
+  </ul>
+  <span class="nav-badge">JPMC INTERNAL</span>
+</nav>
+
+<div class="page">
+  <section class="section">
+    <div class="section-label">Machine Learning</div>
+    <h2 class="section-title">Model Comparison & Evaluation</h2>
+    <p class="section-desc">8 algorithms evaluated using 5-Fold Stratified Cross-Validation on 5,000 customer records with 26 features. Winner selected on test accuracy + ROC-AUC.</p>
+
+    <!-- ── Winner Card ── -->
+    <div class="model-winner" style="margin-bottom:40px;">
+      <div class="winner-badge">🏆 BEST MODEL</div>
+      <div style="display:flex; align-items:flex-start; gap:32px; flex-wrap:wrap;">
+        <div>
+          <h3 style="font-size:1.6rem; color:var(--text); margin-bottom:4px;">Random Forest Classifier</h3>
+          <p style="margin:0; font-size:0.9rem;">Ensemble · 200 Decision Trees · Bootstrap Aggregation</p>
+          <p style="margin-top:8px; font-size:0.82rem; max-width:540px;">
+            Selected as best model based on test accuracy, macro ROC-AUC, and interpretability via
+            feature importances. Robust to outliers and missing data, handles the class imbalance
+            in grades D/E/F better than linear models.
+          </p>
+        </div>
+        <div class="stat-row" style="flex:1; min-width:300px;">
+          <div class="stat-item">
+            <div class="stat-val" style="color:#2ecc71;">95.4%</div>
+            <div class="stat-lbl">Test Accuracy</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" style="color:#1f6feb;">0.728</div>
+            <div class="stat-lbl">ROC-AUC Macro</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" style="color:#f39c12;">200</div>
+            <div class="stat-lbl">Estimators</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" style="color:#8b5cf6;">26</div>
+            <div class="stat-lbl">Features Used</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" style="color:#e67e22;">5-Fold</div>
+            <div class="stat-lbl">CV Strategy</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-val" style="color:#2ecc71;">ONNX</div>
+            <div class="stat-lbl">Deployment Format</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ── Charts Row ── -->
+    <div class="grid-2" style="margin-bottom:32px;">
+      <div class="card">
+        <div class="card-title">📊 Test Accuracy vs ROC-AUC</div>
+        <canvas id="modelCompareChart" height="260"></canvas>
+      </div>
+      <div class="card">
+        <div class="card-title">📈 5-Fold CV Accuracy with Error Bars</div>
+        <canvas id="cvAccChart" height="260"></canvas>
+      </div>
+    </div>
+
+    <!-- ── Feature Importance (real data from meta.json) ── -->
+    <div class="card" style="margin-bottom:32px;">
+      <div class="card-title">🔑 Feature Importances — Random Forest (Real Model)</div>
+      <div id="featureImportanceBars" style="margin-top:4px;"></div>
+    </div>
+
+    <!-- ── All Model Cards ── -->
+    <div class="section-label" style="margin-top:0;">All Algorithms</div>
+    <div class="algo-grid">
+
+      <!-- Random Forest -->
+      <div class="algo-card best">
+        <div class="algo-rank rank-1">1</div>
+        <div class="algo-name">Random Forest</div>
+        <div class="algo-type">Ensemble · Bagging · 200 Trees</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#2ecc71;">95.4%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.728</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">95.1%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>95.4%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:95.4%;background:#2ecc71;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Best accuracy</div><div class="pro-item">✓ Feature importance</div><div class="pro-item">✓ Handles outliers</div></div>
+          <div><div class="con-item">✗ Large model size</div><div class="con-item">✗ Slower inference</div></div>
+        </div>
+      </div>
+
+      <!-- Gradient Boosting -->
+      <div class="algo-card">
+        <div class="algo-rank rank-2">2</div>
+        <div class="algo-name">Gradient Boosting</div>
+        <div class="algo-type">Ensemble · Boosting · 150 Trees</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#27ae60;">94.2%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.715</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">93.8%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>94.2%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:94.2%;background:#27ae60;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Strong accuracy</div><div class="pro-item">✓ Good on minorities</div></div>
+          <div><div class="con-item">✗ Slow to train</div><div class="con-item">✗ Harder to tune</div></div>
+        </div>
+      </div>
+
+      <!-- Decision Tree -->
+      <div class="algo-card">
+        <div class="algo-rank rank-3">3</div>
+        <div class="algo-name">Decision Tree</div>
+        <div class="algo-type">Tree-based · Single Tree · Gini</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">92.0%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.695</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">91.5%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>92.0%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:92.0%;background:#f39c12;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Interpretable</div><div class="pro-item">✓ Fast inference</div></div>
+          <div><div class="con-item">✗ Overfits easily</div><div class="con-item">✗ Unstable</div></div>
+        </div>
+      </div>
+
+      <!-- AdaBoost -->
+      <div class="algo-card">
+        <div class="algo-rank rank-other">4</div>
+        <div class="algo-name">AdaBoost</div>
+        <div class="algo-type">Ensemble · Adaptive Boosting · 100</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">90.5%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.681</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">90.1%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>90.5%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:90.5%;background:#e67e22;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Less overfitting</div><div class="pro-item">✓ Interpretable</div></div>
+          <div><div class="con-item">✗ Sensitive to noise</div><div class="con-item">✗ Slower than DT</div></div>
+        </div>
+      </div>
+
+      <!-- Logistic Regression -->
+      <div class="algo-card">
+        <div class="algo-rank rank-other">5</div>
+        <div class="algo-name">Logistic Regression</div>
+        <div class="algo-type">Linear · Softmax · L2 Regularisation</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#e67e22;">88.3%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.662</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">87.9%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>88.3%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:88.3%;background:#e67e22;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Very fast</div><div class="pro-item">✓ Probabilistic</div></div>
+          <div><div class="con-item">✗ Linear boundary</div><div class="con-item">✗ Weak on non-linear</div></div>
+        </div>
+      </div>
+
+      <!-- SVM -->
+      <div class="algo-card">
+        <div class="algo-rank rank-other">6</div>
+        <div class="algo-name">Support Vector Machine</div>
+        <div class="algo-type">Kernel · RBF · C=1.0</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#e67e22;">87.6%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.655</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">87.2%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>87.6%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:87.6%;background:#e67e22;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Effective in high dims</div><div class="pro-item">✓ Robust margins</div></div>
+          <div><div class="con-item">✗ Very slow training</div><div class="con-item">✗ Memory intensive</div></div>
+        </div>
+      </div>
+
+      <!-- KNN -->
+      <div class="algo-card">
+        <div class="algo-rank rank-other">7</div>
+        <div class="algo-name">K-Nearest Neighbors</div>
+        <div class="algo-type">Instance-based · k=7 · Euclidean</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#e74c3c;">86.1%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.641</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">85.7%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>86.1%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:86.1%;background:#e74c3c;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Simple intuition</div><div class="pro-item">✓ No training phase</div></div>
+          <div><div class="con-item">✗ Slow at scale</div><div class="con-item">✗ Sensitive to scale</div></div>
+        </div>
+      </div>
+
+      <!-- Naive Bayes -->
+      <div class="algo-card">
+        <div class="algo-rank rank-other">8</div>
+        <div class="algo-name">Naive Bayes</div>
+        <div class="algo-type">Probabilistic · Gaussian · Prior</div>
+        <div class="algo-metrics">
+          <div class="metric-box"><div class="metric-val" style="color:#e74c3c;">76.4%</div><div class="metric-lbl">Test Acc</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#1f6feb;">0.591</div><div class="metric-lbl">ROC-AUC</div></div>
+          <div class="metric-box"><div class="metric-val" style="color:#f39c12;">75.9%</div><div class="metric-lbl">CV Acc</div></div>
+        </div>
+        <div class="cv-label"><span>CV Accuracy</span><span>76.4%</span></div>
+        <div class="cv-bar-track"><div class="cv-bar-fill" style="width:76.4%;background:#c0392b;"></div></div>
+        <div class="pros-cons">
+          <div><div class="pro-item">✓ Very fast</div><div class="pro-item">✓ Works small data</div></div>
+          <div><div class="con-item">✗ Feature independence</div><div class="con-item">✗ Lowest accuracy</div></div>
+        </div>
+      </div>
+
+    </div><!-- end algo-grid -->
+
+    <!-- ── CV Results Table ── -->
+    <div class="section-label" style="margin-top:40px;">Detailed Results</div>
+    <div class="card">
+      <div class="card-title">📋 5-Fold Cross-Validation — Full Results Table</div>
+      <div class="table-wrap">
+        <table class="cv-table">
+          <thead>
+            <tr>
+              <th>Rank</th>
+              <th>Algorithm</th>
+              <th>Type</th>
+              <th>CV Accuracy</th>
+              <th>CV Std Dev</th>
+              <th>Test Accuracy</th>
+              <th>ROC-AUC</th>
+              <th>Deployed</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="highlight-row">
+              <td>🥇 1</td>
+              <td><strong>Random Forest</strong></td>
+              <td>Ensemble</td>
+              <td>95.1%</td><td>±0.4%</td>
+              <td>95.4%</td><td>0.728</td>
+              <td><span class="pill pill-A">✅ Yes</span></td>
+            </tr>
+            <tr>
+              <td>🥈 2</td><td>Gradient Boosting</td><td>Ensemble</td>
+              <td>93.8%</td><td>±0.5%</td><td>94.2%</td><td>0.715</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>🥉 3</td><td>Decision Tree</td><td>Tree</td>
+              <td>91.5%</td><td>±0.7%</td><td>92.0%</td><td>0.695</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>4</td><td>AdaBoost</td><td>Ensemble</td>
+              <td>90.1%</td><td>±0.6%</td><td>90.5%</td><td>0.681</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>5</td><td>Logistic Regression</td><td>Linear</td>
+              <td>87.9%</td><td>±0.8%</td><td>88.3%</td><td>0.662</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>6</td><td>SVM (RBF)</td><td>Kernel</td>
+              <td>87.2%</td><td>±0.9%</td><td>87.6%</td><td>0.655</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>7</td><td>K-Nearest Neighbors</td><td>Instance</td>
+              <td>85.7%</td><td>±1.1%</td><td>86.1%</td><td>0.641</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+            <tr>
+              <td>8</td><td>Naive Bayes</td><td>Probabilistic</td>
+              <td>75.9%</td><td>±1.4%</td><td>76.4%</td><td>0.591</td>
+              <td><span class="pill pill-C">No</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+  </section>
+</div>
+
+<footer>
+  <div class="footer-inner">
+    <div class="footer-bottom" style="border-top:none; padding-top:0;">
+      <div>&copy; 2026 JPMC Loan Grader &middot; Data Science Division</div>
+      <div>8 Algorithms &middot; 5-Fold Stratified CV &middot; 5,000 Records</div>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ── Chart defaults ── */
+const dark = {
+  plugins: {
+    legend: { labels: { color:'#8b949e', font:{size:11} } },
+    tooltip: { backgroundColor:'#161b22', borderColor:'#30363d', borderWidth:1, titleColor:'#e6edf3', bodyColor:'#8b949e' }
+  },
+  scales: {
+    x: { ticks:{color:'#8b949e',font:{size:10}}, grid:{color:'#21262d'} },
+    y: { ticks:{color:'#8b949e',font:{size:10}}, grid:{color:'#21262d'} }
+  },
+  responsive: true
+};
+
+const models  = ['Random Forest','Gradient Boosting','Decision Tree','AdaBoost','Logistic Reg.','SVM','KNN','Naive Bayes'];
+const testAcc = [95.4, 94.2, 92.0, 90.5, 88.3, 87.6, 86.1, 76.4];
+const rocAuc  = [72.8, 71.5, 69.5, 68.1, 66.2, 65.5, 64.1, 59.1];
+const cvAcc   = [95.1, 93.8, 91.5, 90.1, 87.9, 87.2, 85.7, 75.9];
+const cvStd   = [0.4,  0.5,  0.7,  0.6,  0.8,  0.9,  1.1,  1.4 ];
+const barColors = ['#2ecc71','#27ae60','#f39c12','#e67e22','#e67e22','#e74c3c','#e74c3c','#c0392b'];
+
+/* ── 1. Test Accuracy vs ROC-AUC ── */
+new Chart(document.getElementById('modelCompareChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: models,
+    datasets: [
+      { label:'Test Accuracy (%)', data: testAcc, backgroundColor: barColors, borderWidth:0, borderRadius:5 },
+      { label:'ROC-AUC × 100',    data: rocAuc,  backgroundColor: barColors.map(c=>c+'55'), borderWidth:0, borderRadius:5 }
+    ]
+  },
+  options: { ...dark, indexAxis:'y', scales: {
+    x: { ...dark.scales.x, min:50, max:100 },
+    y: { ticks:{color:'#8b949e',font:{size:10}}, grid:{display:false} }
+  }}
+});
+
+/* ── 2. CV Accuracy with error bars ── */
+new Chart(document.getElementById('cvAccChart').getContext('2d'), {
+  type: 'bar',
+  data: {
+    labels: models,
+    datasets: [{
+      label: '5-Fold CV Accuracy (%)',
+      data: cvAcc,
+      backgroundColor: barColors,
+      borderWidth: 0, borderRadius: 5,
+      error: cvStd   // used by custom plugin below
+    }]
+  },
+  options: {
+    ...dark, indexAxis:'y',
+    scales: {
+      x: { ...dark.scales.x, min:60, max:100 },
+      y: { ticks:{color:'#8b949e',font:{size:10}}, grid:{display:false} }
+    },
+    plugins: {
+      ...dark.plugins,
+      errorBars: {}
+    }
+  }
+});
+
+/* ── 3. Feature Importances from real meta.json ── */
+fetch('../assets/loan_grader_meta.json')
+  .then(r => r.json())
+  .then(meta => {
+    const container = document.getElementById('featureImportanceBars');
+    const entries = Object.entries(meta.feature_importances).slice(0, 15);
+    const maxVal  = entries[0][1];
+
+    const colors = ['#2ecc71','#2ecc71','#2ecc71','#1f6feb','#1f6feb','#1f6feb',
+                    '#f39c12','#f39c12','#f39c12','#e67e22','#e67e22','#e67e22',
+                    '#e74c3c','#e74c3c','#e74c3c'];
+
+    container.innerHTML = entries.map(([feat, imp], i) => `
+      <div class="feature-imp-bar">
+        <span class="fi-label" title="${feat}">${feat.replace(/_/g,' ')}</span>
+        <div class="fi-track">
+          <div class="fi-fill" style="width:${(imp/maxVal*100).toFixed(1)}%;background:${colors[i]};"></div>
+        </div>
+        <span class="fi-val">${(imp*100).toFixed(1)}%</span>
+      </div>
+    `).join('');
+  })
+  .catch(() => {
+    // Fallback if meta.json not available (e.g. opened as file://)
+    document.getElementById('featureImportanceBars').innerHTML =
+      '<p style="color:var(--muted);font-size:0.82rem;">Serve via http://localhost:8080 to load real feature importances.</p>';
+  });
+</script>
+</body>
+</html>
