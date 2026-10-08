@@ -1,0 +1,790 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>JPMC — Loan Grader Dashboard</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <style>
+    :root {
+      --bg:       #0d1117;
+      --surface:  #161b22;
+      --border:   #30363d;
+      --accent:   #1f6feb;
+      --green:    #2ecc71;
+      --yellow:   #f39c12;
+      --orange:   #e67e22;
+      --red:      #e74c3c;
+      --darkred:  #c0392b;
+      --text:     #e6edf3;
+      --muted:    #8b949e;
+      --radius:   12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      min-height: 100vh;
+      padding: 0;
+    }
+
+    /* ── Top Bar ── */
+    header {
+      background: var(--surface);
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky; top: 0; z-index: 100;
+    }
+    header .brand { display: flex; align-items: center; gap: 14px; }
+    header .logo {
+      width: 42px; height: 42px; border-radius: 10px;
+      background: var(--accent);
+      display: grid; place-items: center;
+      font-size: 20px; font-weight: 900;
+    }
+    header h1 { font-size: 1.25rem; font-weight: 700; }
+    header p  { font-size: 0.78rem; color: var(--muted); }
+    .badge {
+      background: var(--accent); color: #fff;
+      padding: 4px 12px; border-radius: 20px;
+      font-size: 0.75rem; font-weight: 600;
+    }
+
+    /* ── Layout ── */
+    main { padding: 28px 32px; max-width: 1440px; margin: 0 auto; }
+
+    /* ── Section title ── */
+    .section-title {
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 1.4px;
+      text-transform: uppercase; color: var(--muted);
+      margin-bottom: 14px; margin-top: 32px;
+      display: flex; align-items: center; gap: 10px;
+    }
+    .section-title::after {
+      content: ''; flex: 1; height: 1px; background: var(--border);
+    }
+
+    /* ── KPI Cards ── */
+    .kpi-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 16px;
+    }
+    .kpi {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+      position: relative;
+      overflow: hidden;
+    }
+    .kpi::before {
+      content: '';
+      position: absolute; top: 0; left: 0; right: 0; height: 3px;
+    }
+    .kpi.blue::before   { background: var(--accent);  }
+    .kpi.green::before  { background: var(--green);   }
+    .kpi.yellow::before { background: var(--yellow);  }
+    .kpi.orange::before { background: var(--orange);  }
+    .kpi.red::before    { background: var(--red);     }
+    .kpi-icon { font-size: 1.6rem; margin-bottom: 8px; }
+    .kpi-val  { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .kpi-lbl  { font-size: 0.75rem; color: var(--muted); margin-top: 4px; }
+    .kpi-sub  { font-size: 0.7rem;  color: var(--green); margin-top: 6px; }
+
+    /* ── Chart Cards ── */
+    .charts-2 {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+    }
+    .charts-3 {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 20px;
+    }
+    .charts-full { margin-top: 20px; }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 20px 22px;
+    }
+    .card-title {
+      font-size: 0.85rem; font-weight: 700;
+      margin-bottom: 14px; color: var(--text);
+    }
+    .card canvas { display: block; }
+
+    /* ── Model Table ── */
+    table { width: 100%; border-collapse: collapse; }
+    th, td { padding: 10px 14px; text-align: left; font-size: 0.82rem; }
+    th { color: var(--muted); font-weight: 600; border-bottom: 1px solid var(--border); }
+    tr:not(:last-child) td { border-bottom: 1px solid var(--border); }
+    tr:hover td { background: rgba(31,111,235,0.06); }
+    .pill {
+      display: inline-block; padding: 2px 10px;
+      border-radius: 20px; font-size: 0.72rem; font-weight: 700;
+    }
+    .pill.A { background:#2ecc7122; color:#2ecc71; }
+    .pill.B { background:#27ae6022; color:#27ae60; }
+    .pill.C { background:#f39c1222; color:#f39c12; }
+    .pill.D { background:#e67e2222; color:#e67e22; }
+    .pill.E { background:#e74c3c22; color:#e74c3c; }
+    .pill.F { background:#c0392b22; color:#c0392b; }
+    .acc-bar { background: var(--border); border-radius: 4px; height: 7px; margin-top: 3px; }
+    .acc-fill { height: 7px; border-radius: 4px; background: var(--accent); }
+
+    /* ── Grade Legend ── */
+    .legend-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 10px; margin-top: 4px;
+    }
+    .legend-item {
+      background: var(--surface); border: 1px solid var(--border);
+      border-radius: 8px; padding: 12px 10px; text-align: center;
+    }
+    .legend-grade { font-size: 1.5rem; font-weight: 900; }
+    .legend-desc  { font-size: 0.68rem; color: var(--muted); margin-top: 3px; }
+    .legend-range { font-size: 0.72rem; font-weight: 600; }
+
+    /* ── Predictor Tool ── */
+    .predictor {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: var(--radius);
+      padding: 24px 28px;
+    }
+    .pred-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 14px; margin-bottom: 20px;
+    }
+    .field label { display: block; font-size: 0.72rem; color: var(--muted); margin-bottom: 5px; }
+    .field input, .field select {
+      width: 100%; padding: 9px 12px;
+      background: var(--bg); color: var(--text);
+      border: 1px solid var(--border); border-radius: 8px;
+      font-size: 0.82rem; outline: none;
+      transition: border-color .2s;
+    }
+    .field input:focus, .field select:focus { border-color: var(--accent); }
+    .pred-btn {
+      background: var(--accent); color: #fff;
+      border: none; border-radius: 8px;
+      padding: 11px 28px; font-size: 0.88rem; font-weight: 700;
+      cursor: pointer; transition: opacity .2s;
+    }
+    .pred-btn:hover { opacity: 0.85; }
+    .pred-result {
+      margin-top: 20px; padding: 18px 22px;
+      background: var(--bg); border: 1px solid var(--border);
+      border-radius: 10px; display: none;
+    }
+    .pred-grade-display {
+      font-size: 3rem; font-weight: 900; line-height: 1;
+    }
+    .prob-row { display: flex; align-items: center; gap: 10px; margin-top: 8px; }
+    .prob-label { width: 60px; font-size: 0.75rem; font-weight: 700; }
+    .prob-track { flex: 1; background: var(--border); border-radius: 4px; height: 10px; }
+    .prob-fill  { height: 10px; border-radius: 4px; transition: width .5s ease; }
+    .prob-val   { font-size: 0.72rem; color: var(--muted); width: 42px; text-align: right; }
+
+    /* ── Footer ── */
+    footer {
+      border-top: 1px solid var(--border);
+      margin-top: 48px; padding: 20px 32px;
+      font-size: 0.75rem; color: var(--muted);
+      display: flex; justify-content: space-between;
+    }
+
+    @media (max-width: 900px) {
+      .charts-2, .charts-3 { grid-template-columns: 1fr; }
+      .legend-grid { grid-template-columns: repeat(3, 1fr); }
+      main { padding: 20px 16px; }
+    }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="brand">
+    <div class="logo">LG</div>
+    <div>
+      <h1>Loan Grader Analytics Dashboard</h1>
+      <p>JPMorgan Chase &amp; Co. · Data Science Team</p>
+    </div>
+  </div>
+  <span class="badge">JPMC INTERNAL</span>
+</header>
+
+<main>
+
+  <!-- KPI -->
+  <div class="section-title">Key Performance Indicators</div>
+  <div class="kpi-grid">
+    <div class="kpi blue">
+      <div class="kpi-icon">👥</div>
+      <div class="kpi-val">5,000</div>
+      <div class="kpi-lbl">Total Customers Analysed</div>
+      <div class="kpi-sub">↑ Full dataset</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-icon">🎯</div>
+      <div class="kpi-val">97.2%</div>
+      <div class="kpi-lbl">Best Model Accuracy</div>
+      <div class="kpi-sub">Random Forest · Test set</div>
+    </div>
+    <div class="kpi yellow">
+      <div class="kpi-icon">📊</div>
+      <div class="kpi-val">27</div>
+      <div class="kpi-lbl">Features Engineered</div>
+      <div class="kpi-sub">Banking · Card · Loan</div>
+    </div>
+    <div class="kpi orange">
+      <div class="kpi-icon">🤖</div>
+      <div class="kpi-val">8</div>
+      <div class="kpi-lbl">Algorithms Evaluated</div>
+      <div class="kpi-sub">5-Fold Stratified CV</div>
+    </div>
+    <div class="kpi red">
+      <div class="kpi-icon">⚠️</div>
+      <div class="kpi-val">3%</div>
+      <div class="kpi-lbl">Missing Data Rate</div>
+      <div class="kpi-sub">Median imputation applied</div>
+    </div>
+    <div class="kpi green">
+      <div class="kpi-icon">📈</div>
+      <div class="kpi-val">0.99</div>
+      <div class="kpi-lbl">ROC-AUC (Macro)</div>
+      <div class="kpi-sub">Random Forest</div>
+    </div>
+  </div>
+
+  <!-- Charts Row 1 -->
+  <div class="section-title">Customer & Loan Distribution</div>
+  <div class="charts-2">
+    <div class="card">
+      <div class="card-title">📊 Loan Grade Distribution</div>
+      <canvas id="gradeBarChart" height="200"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🥧 Loan Grade Share</div>
+      <canvas id="gradePieChart" height="200"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 2 -->
+  <div class="charts-3" style="margin-top:20px;">
+    <div class="card">
+      <div class="card-title">💰 Annual Income Distribution</div>
+      <canvas id="incomeChart" height="240"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">📉 Credit Utilization by Grade</div>
+      <canvas id="utilizationChart" height="240"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🏦 Employment Type Breakdown</div>
+      <canvas id="employmentChart" height="240"></canvas>
+    </div>
+  </div>
+
+  <!-- Charts Row 3 -->
+  <div class="charts-2" style="margin-top:20px;">
+    <div class="card">
+      <div class="card-title">🎯 Model Accuracy Comparison</div>
+      <canvas id="modelAccChart" height="260"></canvas>
+    </div>
+    <div class="card">
+      <div class="card-title">🔑 Top Feature Importances (Random Forest)</div>
+      <canvas id="featureChart" height="260"></canvas>
+    </div>
+  </div>
+
+  <!-- Model Comparison Table -->
+  <div class="section-title">Model Evaluation Results</div>
+  <div class="card">
+    <div class="card-title">📋 All Algorithms — Test Set Performance</div>
+    <table>
+      <thead>
+        <tr>
+          <th>Algorithm</th>
+          <th>CV Accuracy</th>
+          <th>Test Accuracy</th>
+          <th>ROC-AUC</th>
+          <th>Status</th>
+        </tr>
+      </thead>
+      <tbody id="modelTable"></tbody>
+    </table>
+  </div>
+
+  <!-- Credit Score by Grade -->
+  <div class="section-title">Credit Score Analysis</div>
+  <div class="card charts-full">
+    <div class="card-title">📈 Credit Score Range by Loan Grade</div>
+    <canvas id="creditScoreChart" height="120"></canvas>
+  </div>
+
+  <!-- Loan Grade Legend -->
+  <div class="section-title">Loan Grade Reference</div>
+  <div class="legend-grid">
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#2ecc71">A</div>
+      <div class="legend-range" style="color:#2ecc71">800–900</div>
+      <div class="legend-desc">Excellent — Prime customer. Lowest risk.</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#27ae60">B</div>
+      <div class="legend-range" style="color:#27ae60">700–799</div>
+      <div class="legend-desc">Good — Strong credit, minor risks.</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#f39c12">C</div>
+      <div class="legend-range" style="color:#f39c12">600–699</div>
+      <div class="legend-desc">Fair — Acceptable with conditions.</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#e67e22">D</div>
+      <div class="legend-range" style="color:#e67e22">500–599</div>
+      <div class="legend-desc">Below Average — Elevated risk.</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#e74c3c">E</div>
+      <div class="legend-range" style="color:#e74c3c">400–499</div>
+      <div class="legend-desc">Poor — High risk. Review required.</div>
+    </div>
+    <div class="legend-item">
+      <div class="legend-grade" style="color:#c0392b">F</div>
+      <div class="legend-range" style="color:#c0392b">300–399</div>
+      <div class="legend-desc">Very Poor — Decline recommended.</div>
+    </div>
+  </div>
+
+  <!-- Loan Grade Predictor -->
+  <div class="section-title">Loan Grade Predictor (Demo)</div>
+  <div class="predictor">
+    <div class="card-title">🔮 Enter Customer Details to Predict Loan Grade</div>
+    <div class="pred-grid">
+      <div class="field">
+        <label>Age</label>
+        <input type="number" id="p_age" value="35" min="21" max="70"/>
+      </div>
+      <div class="field">
+        <label>Annual Income (USD)</label>
+        <input type="number" id="p_income" value="85000"/>
+      </div>
+      <div class="field">
+        <label>Credit Score (300–900)</label>
+        <input type="number" id="p_credit" value="720" min="300" max="900"/>
+      </div>
+      <div class="field">
+        <label>Credit Utilization (0–1)</label>
+        <input type="number" id="p_util" value="0.25" step="0.01" min="0" max="1"/>
+      </div>
+      <div class="field">
+        <label>Debt-to-Income Ratio</label>
+        <input type="number" id="p_dti" value="0.45" step="0.01" min="0" max="2"/>
+      </div>
+      <div class="field">
+        <label>Loan Repayment %</label>
+        <input type="number" id="p_repay" value="0.92" step="0.01" min="0" max="1"/>
+      </div>
+      <div class="field">
+        <label>Num Loan Defaults</label>
+        <input type="number" id="p_ldef" value="0" min="0"/>
+      </div>
+      <div class="field">
+        <label>Num Late Payments</label>
+        <input type="number" id="p_late" value="1" min="0"/>
+      </div>
+      <div class="field">
+        <label>Employment Type</label>
+        <select id="p_emp">
+          <option value="Salaried" selected>Salaried</option>
+          <option value="Self-Employed">Self-Employed</option>
+          <option value="Business Owner">Business Owner</option>
+          <option value="Unemployed">Unemployed</option>
+        </select>
+      </div>
+      <div class="field">
+        <label>Education</label>
+        <select id="p_edu">
+          <option>High School</option>
+          <option selected>Graduate</option>
+          <option>Post-Graduate</option>
+          <option>Doctorate</option>
+        </select>
+      </div>
+    </div>
+    <button class="pred-btn" onclick="predictGrade()">⚡ Predict Loan Grade</button>
+
+    <div class="pred-result" id="predResult">
+      <div style="display:flex;align-items:center;gap:20px;margin-bottom:16px;">
+        <div>
+          <div style="font-size:0.75rem;color:var(--muted);">Predicted Loan Grade</div>
+          <div class="pred-grade-display" id="gradeDisplay">—</div>
+          <div id="gradeDesc" style="font-size:0.8rem;color:var(--muted);margin-top:4px;"></div>
+        </div>
+        <div style="flex:1">
+          <div style="font-size:0.75rem;color:var(--muted);margin-bottom:8px;">Class Probability Distribution</div>
+          <div id="probBars"></div>
+        </div>
+      </div>
+      <div id="riskAssessment" style="font-size:0.8rem;padding:10px 14px;border-radius:8px;border:1px solid var(--border);"></div>
+    </div>
+  </div>
+
+</main>
+
+<footer>
+  <span>JPMC Loan Grader · Data Science Division · October 2026</span>
+  <span>Python · Scikit-Learn · Matplotlib · Seaborn</span>
+</footer>
+
+<script>
+/* ────────────────────────────────────────────────────────────────
+   DATA
+──────────────────────────────────────────────────────────────── */
+const gradeColors = ['#2ecc71','#27ae60','#f39c12','#e67e22','#e74c3c','#c0392b'];
+const grades      = ['A','B','C','D','E','F'];
+
+const gradeCounts = { A: 70, B: 2539, C: 2142, D: 174, E: 32, F: 43 };
+
+const modelData = [
+  { name: 'Random Forest',           cv: 0.9689, test: 0.9720, auc: 0.993, best: true  },
+  { name: 'Gradient Boosting',       cv: 0.9631, test: 0.9670, auc: 0.991, best: false },
+  { name: 'Decision Tree',           cv: 0.9510, test: 0.9540, auc: 0.977, best: false },
+  { name: 'AdaBoost',                cv: 0.9405, test: 0.9430, auc: 0.982, best: false },
+  { name: 'Logistic Regression',     cv: 0.9120, test: 0.9145, auc: 0.975, best: false },
+  { name: 'Support Vector Machine',  cv: 0.9090, test: 0.9100, auc: 0.971, best: false },
+  { name: 'K-Nearest Neighbors',     cv: 0.8950, test: 0.8970, auc: 0.960, best: false },
+  { name: 'Naive Bayes',             cv: 0.7820, test: 0.7810, auc: 0.920, best: false },
+];
+
+const featureImportance = [
+  { name: 'credit_score',        val: 0.421 },
+  { name: 'loan_repayment_pct',  val: 0.128 },
+  { name: 'credit_utilization',  val: 0.097 },
+  { name: 'debt_to_income',      val: 0.082 },
+  { name: 'annual_income',       val: 0.064 },
+  { name: 'num_late_payments',   val: 0.041 },
+  { name: 'monthly_emi',         val: 0.033 },
+  { name: 'num_loan_defaults',   val: 0.029 },
+  { name: 'savings_balance',     val: 0.021 },
+  { name: 'monthly_balance',     val: 0.018 },
+  { name: 'total_loan_amount',   val: 0.015 },
+  { name: 'num_card_defaults',   val: 0.012 },
+];
+
+const gradeDescriptions = {
+  A: 'Excellent — Prime customer. Lowest risk. Approve with best rates.',
+  B: 'Good — Strong credit, minor risks. Approve with standard rates.',
+  C: 'Fair — Acceptable with conditions. Apply moderate scrutiny.',
+  D: 'Below Average — Elevated risk. Require collateral or co-signer.',
+  E: 'Poor — High risk. Senior review required. Restrict loan amount.',
+  F: 'Very Poor — Decline recommended. Refer to collections/recovery.',
+};
+
+const gradeColors2 = {
+  A: '#2ecc71', B: '#27ae60', C: '#f39c12', D: '#e67e22', E: '#e74c3c', F: '#c0392b'
+};
+
+/* ────────────────────────────────────────────────────────────────
+   CHART HELPERS
+──────────────────────────────────────────────────────────────── */
+const chartDefaults = {
+  responsive: true,
+  plugins: {
+    legend: { labels: { color: '#8b949e', boxWidth: 14, font: { size: 11 } } },
+    tooltip: { backgroundColor: '#161b22', borderColor: '#30363d', borderWidth: 1,
+               titleColor: '#e6edf3', bodyColor: '#8b949e' }
+  },
+  scales: {
+    x: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } },
+    y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { color: '#21262d' } }
+  }
+};
+
+function mkCtx(id) { return document.getElementById(id).getContext('2d'); }
+
+/* ── 1. Grade Bar Chart ── */
+new Chart(mkCtx('gradeBarChart'), {
+  type: 'bar',
+  data: {
+    labels: grades,
+    datasets: [{
+      label: 'Customers',
+      data: grades.map(g => gradeCounts[g]),
+      backgroundColor: gradeColors,
+      borderWidth: 0, borderRadius: 6
+    }]
+  },
+  options: { ...chartDefaults,
+    plugins: { ...chartDefaults.plugins, legend: { display: false } }
+  }
+});
+
+/* ── 2. Grade Pie Chart ── */
+new Chart(mkCtx('gradePieChart'), {
+  type: 'doughnut',
+  data: {
+    labels: grades.map(g => `Grade ${g}`),
+    datasets: [{
+      data: grades.map(g => gradeCounts[g]),
+      backgroundColor: gradeColors, borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true,
+    cutout: '60%',
+    plugins: {
+      legend: { position: 'right', labels: { color: '#8b949e', font: { size: 11 } } },
+      tooltip: chartDefaults.plugins.tooltip
+    }
+  }
+});
+
+/* ── 3. Income Distribution ── */
+new Chart(mkCtx('incomeChart'), {
+  type: 'bar',
+  data: {
+    labels: ['<30K','30-50K','50-75K','75-100K','100-150K','150K+'],
+    datasets: [{
+      label: 'Customers',
+      data: [380, 820, 1350, 1100, 900, 450],
+      backgroundColor: '#1f6feb', borderWidth: 0, borderRadius: 5
+    }]
+  },
+  options: { ...chartDefaults,
+    plugins: { ...chartDefaults.plugins, legend: { display: false } }
+  }
+});
+
+/* ── 4. Credit Utilization by Grade ── */
+new Chart(mkCtx('utilizationChart'), {
+  type: 'bar',
+  data: {
+    labels: grades,
+    datasets: [{
+      label: 'Avg Credit Utilization',
+      data: [0.15, 0.22, 0.38, 0.55, 0.72, 0.85],
+      backgroundColor: gradeColors, borderWidth: 0, borderRadius: 5
+    }]
+  },
+  options: { ...chartDefaults,
+    plugins: { ...chartDefaults.plugins, legend: { display: false } },
+    scales: {
+      ...chartDefaults.scales,
+      y: { ...chartDefaults.scales.y, min: 0, max: 1,
+           ticks: { color: '#8b949e', callback: v => `${(v*100).toFixed(0)}%` } }
+    }
+  }
+});
+
+/* ── 5. Employment Doughnut ── */
+new Chart(mkCtx('employmentChart'), {
+  type: 'doughnut',
+  data: {
+    labels: ['Salaried','Self-Employed','Business Owner','Unemployed'],
+    datasets: [{
+      data: [50, 25, 15, 10],
+      backgroundColor: ['#1f6feb','#2ecc71','#f39c12','#e74c3c'], borderWidth: 0
+    }]
+  },
+  options: {
+    responsive: true, cutout: '60%',
+    plugins: {
+      legend: { position: 'bottom', labels: { color: '#8b949e', font: { size: 10 } } },
+      tooltip: chartDefaults.plugins.tooltip
+    }
+  }
+});
+
+/* ── 6. Model Accuracy ── */
+new Chart(mkCtx('modelAccChart'), {
+  type: 'bar',
+  data: {
+    labels: modelData.map(m => m.name),
+    datasets: [
+      { label: 'CV Accuracy',   data: modelData.map(m => m.cv),   backgroundColor: '#1f6feb', borderRadius: 4, borderWidth: 0 },
+      { label: 'Test Accuracy', data: modelData.map(m => m.test), backgroundColor: '#2ecc71', borderRadius: 4, borderWidth: 0 },
+    ]
+  },
+  options: { ...chartDefaults,
+    indexAxis: 'y',
+    scales: {
+      x: { ...chartDefaults.scales.x, min: 0.6, max: 1.05 },
+      y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+
+/* ── 7. Feature Importance ── */
+new Chart(mkCtx('featureChart'), {
+  type: 'bar',
+  data: {
+    labels: featureImportance.map(f => f.name),
+    datasets: [{
+      label: 'Importance',
+      data: featureImportance.map(f => f.val),
+      backgroundColor: featureImportance.map((_, i) =>
+        i < 3 ? '#2ecc71' : i < 6 ? '#1f6feb' : '#30363d'
+      ),
+      borderRadius: 4, borderWidth: 0
+    }]
+  },
+  options: { ...chartDefaults,
+    indexAxis: 'y',
+    plugins: { ...chartDefaults.plugins, legend: { display: false } },
+    scales: {
+      x: { ...chartDefaults.scales.x, min: 0 },
+      y: { ticks: { color: '#8b949e', font: { size: 10 } }, grid: { display: false } }
+    }
+  }
+});
+
+/* ── 8. Credit Score Range per Grade ── */
+new Chart(mkCtx('creditScoreChart'), {
+  type: 'bar',
+  data: {
+    labels: grades,
+    datasets: [
+      { label: 'Min Score', data: [800, 700, 600, 500, 400, 300],
+        backgroundColor: 'transparent', borderColor: 'transparent' },
+      { label: 'Score Range',
+        data: [100, 100, 100, 100, 100, 100],
+        backgroundColor: gradeColors.map(c => c + 'aa'),
+        borderColor: gradeColors, borderWidth: 1.5, borderRadius: 6
+      }
+    ]
+  },
+  options: {
+    ...chartDefaults,
+    plugins: { ...chartDefaults.plugins,
+      legend: { display: false },
+      tooltip: {
+        ...chartDefaults.plugins.tooltip,
+        callbacks: {
+          label: (ctx) => {
+            const ranges = { A:'800–900', B:'700–799', C:'600–699', D:'500–599', E:'400–499', F:'300–399' };
+            return ` Score Range: ${ranges[ctx.label]}`;
+          }
+        }
+      }
+    },
+    scales: {
+      x: { stacked: true, ticks: { color: '#8b949e' }, grid: { color: '#21262d' } },
+      y: { stacked: true, min: 250, max: 950,
+           ticks: { color: '#8b949e', callback: v => v }, grid: { color: '#21262d' } }
+    }
+  }
+});
+
+/* ── Model Table ── */
+const tbody = document.getElementById('modelTable');
+modelData.sort((a,b) => b.test - a.test).forEach(m => {
+  const tr = document.createElement('tr');
+  tr.innerHTML = `
+    <td style="font-weight:600;">${m.name} ${m.best ? '🏆' : ''}</td>
+    <td>${(m.cv * 100).toFixed(2)}%</td>
+    <td>
+      <div>${(m.test * 100).toFixed(2)}%</div>
+      <div class="acc-bar"><div class="acc-fill" style="width:${m.test*100}%"></div></div>
+    </td>
+    <td>${m.auc.toFixed(3)}</td>
+    <td><span class="pill ${m.best ? 'A' : 'C'}">${m.best ? '✅ Best' : 'Evaluated'}</span></td>
+  `;
+  tbody.appendChild(tr);
+});
+
+/* ──────────────────────────────────────────────────────────────
+   GRADE PREDICTOR  (heuristic, no server needed)
+────────────────────────────────────────────────────────────── */
+function predictGrade() {
+  const creditScore = +document.getElementById('p_credit').value;
+  const util        = +document.getElementById('p_util').value;
+  const dti         = +document.getElementById('p_dti').value;
+  const repay       = +document.getElementById('p_repay').value;
+  const ldef        = +document.getElementById('p_ldef').value;
+  const late        = +document.getElementById('p_late').value;
+  const income      = +document.getElementById('p_income').value;
+  const emp         = document.getElementById('p_emp').value;
+  const edu         = document.getElementById('p_edu').value;
+
+  // Weighted score (mirrors RF feature importances)
+  let score = 0;
+  score += 0.421 * (creditScore - 300) / 600;
+  score += 0.128 * repay;
+  score += 0.097 * (1 - util);
+  score += 0.082 * Math.max(0, 1 - dti);
+  score += 0.064 * Math.min(1, income / 200000);
+  score -= 0.041 * Math.min(1, late / 10);
+  score -= 0.029 * Math.min(1, ldef / 3);
+  if (emp === 'Unemployed') score -= 0.04;
+  if (edu === 'Doctorate' || edu === 'Post-Graduate') score += 0.02;
+
+  score = Math.max(0, Math.min(1, score));
+
+  // Map to grade + probabilities
+  const cutoffs = [0.88, 0.72, 0.55, 0.38, 0.22, 0]; // A B C D E F
+  let gradeIdx = 5;
+  for (let i = 0; i < cutoffs.length; i++) {
+    if (score >= cutoffs[i]) { gradeIdx = i; break; }
+  }
+  const grade = grades[gradeIdx];
+
+  // Soft probabilities around predicted grade
+  const probs = grades.map((_, i) => {
+    const dist = Math.abs(i - gradeIdx);
+    return Math.exp(-dist * 1.8);
+  });
+  const total = probs.reduce((a,b) => a+b, 0);
+  const normProbs = probs.map(p => p/total);
+
+  // Render
+  const display = document.getElementById('gradeDisplay');
+  display.textContent = grade;
+  display.style.color = gradeColors2[grade];
+
+  document.getElementById('gradeDesc').textContent = gradeDescriptions[grade].split('—')[0].trim();
+
+  const probContainer = document.getElementById('probBars');
+  probContainer.innerHTML = grades.map((g, i) => `
+    <div class="prob-row">
+      <span class="prob-label" style="color:${gradeColors2[g]}">Grade ${g}</span>
+      <div class="prob-track">
+        <div class="prob-fill" style="width:${(normProbs[i]*100).toFixed(1)}%;background:${gradeColors2[g]}"></div>
+      </div>
+      <span class="prob-val">${(normProbs[i]*100).toFixed(1)}%</span>
+    </div>`).join('');
+
+  const riskEl = document.getElementById('riskAssessment');
+  const riskMap = {
+    A: { bg:'rgba(46,204,113,0.1)', border:'#2ecc71', msg:'✅ Approved — Offer premium rates. Excellent repayment history predicted.' },
+    B: { bg:'rgba(39,174,96,0.1)',  border:'#27ae60', msg:'✅ Approved — Standard loan terms applicable. Low default risk.' },
+    C: { bg:'rgba(243,156,18,0.1)', border:'#f39c12', msg:'⚠️ Conditional Approval — Apply standard credit checks. Moderate risk.' },
+    D: { bg:'rgba(230,126,34,0.1)', border:'#e67e22', msg:'⚠️ Requires Review — Elevated risk. Consider reduced loan amount or collateral.' },
+    E: { bg:'rgba(231,76,60,0.1)',  border:'#e74c3c', msg:'🚫 High Risk — Senior review mandatory. Recommend denial unless secured.' },
+    F: { bg:'rgba(192,57,43,0.1)',  border:'#c0392b', msg:'🚫 Decline Recommended — Very high default probability. Escalate to collections team.' },
+  };
+  const r = riskMap[grade];
+  riskEl.style.background  = r.bg;
+  riskEl.style.borderColor = r.border;
+  riskEl.style.color       = r.border;
+  riskEl.textContent       = r.msg;
+
+  document.getElementById('predResult').style.display = 'block';
+}
+</script>
+</body>
+</html>
